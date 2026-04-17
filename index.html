@@ -1,9 +1,10 @@
+
 <!doctype html>
 <html lang="th">
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vet Clinic Job Board | พัฒนาโดย VTAT</title>
+  <title>Vet Clinic Job Board</title>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="/_sdk/data_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -12,414 +13,584 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', 'Sarabun', sans-serif; }
-    #map { height: 450px; border-radius: 16px; margin-bottom: 24px; z-index: 10; border: 4px solid white; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-    
-    /* Marker Styles */
-    .custom-marker { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50% 50% 50% 0; color: white; border: 2px solid white; transform: rotate(-45deg); cursor: pointer; transition: all 0.3s; }
-    .custom-marker i { transform: rotate(45deg); font-style: normal; font-size: 18px; }
-    .custom-marker:hover { transform: rotate(-45deg) scale(1.1); box-shadow: 0 0 15px rgba(0,0,0,0.3); }
-    .marker-hospital { background: #ef4444; }
-    .marker-lab { background: #3b82f6; }
-    .marker-university { background: #8b5cf6; }
-    .marker-company { background: #f59e0b; }
-
-    /* UI Components */
-    .job-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-    .job-card:hover { border-color: #8b5cf6; transform: translateY(-3px); box-shadow: 0 12px 20px -8px rgba(139, 92, 246, 0.15); }
-    .form-modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 16px; }
-    .form-modal.active { display: flex; }
-    .modal-content { background: white; border-radius: 20px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-    .image-preview { width: 100%; border-radius: 8px; margin-top: 10px; border: 2px dashed #e5e7eb; }
-    .clinic-option { padding: 16px; border: 1px solid #f1f5f9; border-radius: 12px; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; background: #f8fafc; }
-    .clinic-option:hover { background: #f1f5f9; border-color: #cbd5e1; transform: scale(1.01); }
+    html, body { height: 100%; width: 100%; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    #map { height: 400px; border-radius: 12px; margin-bottom: 20px; }
+    .custom-marker {
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+      border-radius: 50%;
+      color: white;
+      font-size: 28px;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+      border: 3px solid white;
+      animation: bounce 2s infinite;
+      cursor: pointer;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .job-card {
+      background: white;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .job-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+    .job-image {
+      width: 100%;
+      max-height: 300px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .form-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+    }
+    .form-modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .clinic-select-modal {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+    }
+    .clinic-option {
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .clinic-option:hover {
+      border-color: #667eea;
+      background: #f3f4f6;
+    }
+    .clinic-option.selected {
+      border-color: #667eea;
+      background: #ede9fe;
+    }
+    .image-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    .clinic-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
   </style>
+  <style>body { box-sizing: border-box; }</style>
  </head>
- <body class="bg-[#fcfcff]">
-  <div class="app-wrapper min-h-screen pb-20">
-   
-   <header class="bg-gradient-to-r from-indigo-700 via-purple-600 to-blue-600 text-white pt-10 pb-20 px-6">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-     <div>
-      <h1 id="app-title" class="text-4xl font-extrabold tracking-tight mb-2">Vet Clinic Job Board</h1>
-      <p class="text-indigo-100 flex items-center gap-2 text-lg">
-        <i data-lucide="search" class="w-5 h-5"></i> ค้นหาโอกาสในสายงานเทคนิคการสัตวแพทย์
-      </p>
+ <body class="bg-gradient-to-br from-gray-50 to-gray-100">
+  <div class="app-wrapper h-full w-full overflow-auto bg-gradient-to-br from-blue-50 via-white to-purple-50">
+   <!-- Header -->
+   <header class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-6 py-8">
+     <h1 id="app-title" class="text-3xl font-bold mb-2">Vet Clinic Job Board</h1>
+     <p class="text-purple-100">ค้นหาตำแหน่งงานจากคลินิกสัตวแพทย์ทั่วประเทศ</p>
+    </div>
+   </header><!-- Main Content -->
+   <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- Add Job Button --> <button id="addJobBtn" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg mb-6 font-semibold flex items-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl"> <i data-lucide="plus" style="width: 20px; height: 20px;"></i> สมัครเป็นคลินิก / เพิ่มประกาศ </button> <!-- Map -->
+    <div id="map" class="shadow-lg"></div><!-- Jobs List -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+     <h2 class="text-2xl font-bold mb-6 text-gray-800">ประกาศรับสมัครทั้งหมด</h2>
+     <div id="jobsList" class="space-y-4">
+      <p class="text-gray-500 text-center py-8">กำลังโหลดข้อมูล...</p>
      </div>
-     <button id="addJobBtn" class="bg-white text-indigo-700 hover:bg-indigo-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-xl active:scale-95">
-       <i data-lucide="plus-circle"></i> ประกาศรับสมัครงาน
-     </button>
+     <script>
+       document.getElementById('jobsList').addEventListener('click', (e) => {
+         const card = e.target.closest('.job-card');
+         if (card) {
+           const jobId = card.dataset.jobId;
+           window.editJob(jobId);
+         }
+       });
+     </script>
     </div>
-   </header>
-
-   <main class="max-w-6xl mx-auto px-6 -mt-12">
-    <div id="map"></div>
-
-    <div class="grid lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-1">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-6">
-          <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <i data-lucide="filter" class="w-5 h-5 text-purple-500"></i> ตัวกรองประกาศ
-          </h3>
-          <div class="space-y-2" id="filterOptions">
-            <button onclick="filterJobs('all')" class="w-full text-left px-4 py-2 rounded-lg bg-purple-50 text-purple-700 font-semibold">ทั้งหมด</button>
-            <button onclick="filterJobs('hospital')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 text-gray-600">🏥 โรงพยาบาลสัตว์</button>
-            <button onclick="filterJobs('lab')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 text-gray-600">🧪 ห้องปฏิบัติการ</button>
-            <button onclick="filterJobs('company')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 text-gray-600">🏢 บริษัทเอกชน</button>
-          </div>
-        </div>
+   </main><!-- Footer -->
+   <footer class="bg-gray-100 border-t border-gray-200 mt-12">
+    <div class="max-w-6xl mx-auto px-6 py-6">
+     <div class="flex items-center gap-4">
+      <a href="https://www.vtat.or.th" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 hover:scale-110 transition-transform duration-300">
+       <svg width="48" height="48" viewbox="0 0 48 48" class="text-purple-600"><circle cx="24" cy="24" r="22" fill="currentColor" opacity="0.1" stroke="currentColor" stroke-width="2" /> <path d="M24 12c-2 0-3.5 1.5-3.5 3.5 0 1.5 1 2.5 2 3v8h3v-8c1-.5 2-1.5 2-3 0-2-1.5-3.5-3.5-3.5zm-1 14h2v2h-2zm0 3h2v2h-2zm-6-8h2v6h-2zm12 0h2v6h-2z" fill="currentColor" />
+       </svg></a>
+      <div>
+       <p class="text-sm text-gray-700"><strong>พัฒนาโดย</strong> <a href="https://www.vtat.or.th" target="_blank" rel="noopener noreferrer" class="text-purple-600 hover:text-purple-700 font-semibold underline">สมาคมเทคนิคการสัตวแพทย์แห่งประเทศไทย</a></p>
+       <p class="text-xs text-gray-500 mt-1">Veterinary Technicians Association of Thailand</p>
       </div>
-
-      <div class="lg:col-span-2 space-y-4">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-xl font-bold text-gray-800">ประกาศล่าสุด</h2>
-          <span id="jobCount" class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">0 ตำแหน่ง</span>
-        </div>
-        <div id="jobsList" class="space-y-4">
-          <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-             <div class="animate-spin inline-block w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mb-4"></div>
-             <p class="text-gray-400">กำลังเตรียมข้อมูลคลินิก...</p>
-          </div>
-        </div>
-      </div>
+     </div>
     </div>
-   </main>
-   
-   <footer class="mt-20 border-t border-gray-200 py-10 px-6">
-      <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
-        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-          <i data-lucide="shield-check" class="text-purple-600 w-8 h-8"></i>
-        </div>
-        <p class="text-gray-800 font-bold">สมาคมเทคนิคการสัตวแพทย์แห่งประเทศไทย (VTAT)</p>
-        <p class="text-gray-500 text-sm mt-1">Veterinary Technicians Association of Thailand</p>
-      </div>
    </footer>
-  </div>
-
+  </div><!-- Clinic Selection Modal -->
   <div id="clinicSelectModal" class="form-modal">
-   <div class="modal-content">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold text-gray-900" id="selectionTitle">เลือกจังหวัด</h2>
-      <button onclick="closeModals()" class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
-    </div>
-    <div id="selectionContainer" class="space-y-2 max-height-[400px] overflow-y-auto pr-2"></div>
-    <div class="mt-8 pt-6 border-t border-gray-100">
-      <button onclick="showNewClinicForm()" class="w-full py-4 bg-gray-50 text-gray-600 font-bold rounded-xl border-2 border-dashed border-gray-200 hover:border-purple-400 hover:text-purple-600 transition-all">
-        + สมัครคลินิกใหม่/ไม่อยู่ในรายชื่อ
-      </button>
-    </div>
+   <div class="clinic-select-modal">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">คุณเป็นคลินิกใด?</h2>
+    <div id="clinicOptionsContainer" class="space-y-3 mb-6" style="max-height: 400px; overflow-y: auto;"></div><button id="registerNewClinic" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-semibold transition-all duration-300"> + สมัครคลินิกใหม่ </button>
    </div>
-  </div>
-
+  </div><!-- Add/Edit Job Modal -->
   <div id="formModal" class="form-modal">
    <div class="modal-content">
-    <div class="flex justify-between items-center mb-8">
-     <h2 id="formTitle" class="text-2xl font-bold text-gray-900">เพิ่มประกาศงาน</h2>
-     <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <div class="flex justify-between items-center mb-6">
+     <h2 id="formTitle" class="text-2xl font-bold text-gray-800">เพิ่มประกาศใหม่</h2><button id="closeModalBtn" class="text-gray-500 hover:text-gray-700"> <i data-lucide="x" style="width: 24px; height: 24px;"></i> </button>
     </div>
-    
-    <form id="jobForm" class="space-y-6">
-     <div id="clinicDisplay" class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 mb-6 hidden">
-        <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">โพสต์ในนาม:</span>
-        <p id="selectedClinicName" class="text-lg font-bold text-indigo-700"></p>
-     </div>
-
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="col-span-2">
-       <label class="block text-sm font-bold text-gray-700 mb-2">ประเภทสถานประกอบการ</label>
-       <select id="clinicType" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500" required>
-        <option value="hospital">🏥 โรงพยาบาลสัตว์</option>
-        <option value="lab">🧪 ห้องปฏิบัติการ</option>
-        <option value="university">🎓 มหาวิทยาลัย</option>
-        <option value="company">🏢 บริษัทเอกชน</option>
-       </select>
-      </div>
-
-      <div class="col-span-2">
-       <label class="block text-sm font-bold text-gray-700 mb-2">ตำแหน่งงาน</label>
-       <input type="text" id="position" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500" placeholder="เช่น ผู้ช่วยสัตวแพทย์, Admin" required>
-      </div>
-
-      <div class="col-span-2">
-       <label class="block text-sm font-bold text-gray-700 mb-2">รายละเอียด</label>
-       <textarea id="announcement" rows="4" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500" placeholder="ระบุรายละเอียดงาน สวัสดิการ หรือเงื่อนไขเพิ่มเติม..." required></textarea>
-      </div>
-
-      <div>
-       <label class="block text-sm font-bold text-gray-700 mb-2">เงินเดือน</label>
-       <input type="text" id="salary" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500" placeholder="ระบุหรือตามตกลง">
-      </div>
-
-      <div>
-       <label class="block text-sm font-bold text-gray-700 mb-2">เบอร์ติดต่อ</label>
-       <input type="tel" id="phone" class="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500" placeholder="0x-xxxxxxx">
-      </div>
-     </div>
-
+    <form id="jobForm">
      <div class="space-y-4">
-       <div class="bg-gray-50 p-4 rounded-xl">
-         <label class="block text-sm font-bold text-gray-700 mb-2">รูปประกาศ (Infographic)</label>
-         <input type="file" id="imageInput" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
-         <img id="imagePreview" class="image-preview hidden shadow-md">
+      <div id="clinicDisplay" style="display:none;">
+       <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+        <p class="text-sm text-gray-600">คลินิกของคุณ:</p>
+        <p id="selectedClinicName" class="font-bold text-blue-600"></p>
        </div>
+      </div>
+      <div>
+       <label class="block text-sm font-semibold text-gray-700 mb-1">ตำแหน่งงาน</label> <input type="text" id="position" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="เช่น Veterinarian, Assistant" required>
+      </div>
+      <div>
+       <label class="block text-sm font-semibold text-gray-700 mb-1">ข้อความประกาศ</label> <textarea id="announcement" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" rows="4" placeholder="รายละเอียดประกาศการรับสมัคร" required></textarea>
+      </div>
+      <div>
+       <label class="block text-sm font-semibold text-gray-700 mb-1">เงินเดือน</label> <input type="text" id="salary" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="เช่น 15,000 - 25,000 บาท">
+      </div>
+      <div>
+       <label class="block text-sm font-semibold text-gray-700 mb-1">ประสบการณ์ที่ต้อง</label> <input type="text" id="experience" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="เช่น 2-3 ปี">
+      </div>
+      <div>
+       <label class="block text-sm font-semibold text-gray-700 mb-1">เบอร์โทรศัพท์</label> <input type="tel" id="phone" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="เช่น 02-123-4567">
+      </div>
+      <div>
+       <label class="block text-sm font-semibold text-gray-700 mb-1">แนบโลโก้คลินิก (ไม่บังคับ)</label> <input type="file" id="logoInput" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" accept="image/*"> <img id="logoPreview" class="image-preview" style="display:none; max-height: 150px; max-width: 150px; object-fit: contain;">
+      </div>
+      <div>
+       <label class="block text-sm font-semibold text-gray-700 mb-1">แนบรูปประกาศ/Infograph (ไม่บังคับ)</label> <input type="file" id="imageInput" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" accept="image/*"> <img id="imagePreview" class="image-preview" style="display:none;">
+      </div>
      </div>
-
-     <div class="flex gap-4 pt-4">
-      <button type="submit" id="submitBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-purple-200 transition-all">บันทึกและประกาศ</button>
-      <button type="button" id="deleteBtn" class="px-6 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-xl hidden transition-all">ลบ</button>
+     <div class="flex gap-3 mt-6">
+      <button type="submit" id="submitBtn" class="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300"> บันทึกข้อมูล </button> <button type="button" id="deleteBtn" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all duration-300 hidden"> ลบ </button> <button type="button" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all duration-300" onclick="document.getElementById('formModal').classList.remove('active')"> ยกเลิก </button>
      </div>
     </form>
    </div>
   </div>
-
   <script>
     let map;
     let markers = {};
     let allJobs = [];
     let currentEditingJob = null;
     let selectedClinic = null;
+    const provinceCoordinates = {
+      'กรุงเทพ': { lat: 13.7563, lng: 100.5018 },
+      'นนทบุรี': { lat: 13.8641, lng: 100.5191 },
+      'ปทุมธานี': { lat: 14.0195, lng: 100.5265 },
+      'สมุทรปราการ': { lat: 13.5891, lng: 100.7550 },
+      'เชียงใหม่': { lat: 18.7883, lng: 98.9853 },
+      'ขอนแก่น': { lat: 16.4401, lng: 102.8360 },
+      'สงขลา': { lat: 7.1906, lng: 100.6045 },
+      'หาดใหญ่': { lat: 7.7956, lng: 100.2833 }
+    };
 
-    // Database Mock (In reality, this would come from a server)
+    // Sample clinics data
     const clinicsData = {
       'กรุงเทพ': [
         { name: 'Happy Paws Clinic', lat: 13.7563, lng: 100.5018 },
-        { name: 'Vet Care Center', lat: 13.7480, lng: 100.5300 },
-        { name: 'Bangkok Animal Hospital', lat: 13.7650, lng: 100.4900 }
+        { name: 'Pet Care Center', lat: 13.7480, lng: 100.5300 },
+        { name: 'Animal Hospital Bangkok', lat: 13.7650, lng: 100.4900 }
+      ],
+      'นนทบุรี': [
+        { name: 'Nonthaburi Pet Clinic', lat: 13.8641, lng: 100.5191 },
+        { name: 'Vet Plus Nonthaburi', lat: 13.8700, lng: 100.5100 }
+      ],
+      'ปทุมธานี': [
+        { name: 'Pathum Thani Vet Hospital', lat: 14.0195, lng: 100.5265 }
+      ],
+      'สมุทรปราการ': [
+        { name: 'Samut Prakan Animal Care', lat: 13.5891, lng: 100.7550 }
       ],
       'เชียงใหม่': [
         { name: 'Chiang Mai Pet Hospital', lat: 18.7883, lng: 98.9853 },
-        { name: 'North Vet Clinic', lat: 18.7950, lng: 98.9900 }
+        { name: 'Northern Veterinary Clinic', lat: 18.7900, lng: 98.9800 }
       ],
-      'ขอนแก่น': [{ name: 'KKU Vet Hospital', lat: 16.4401, lng: 102.8360 }]
+      'ขอนแก่น': [
+        { name: 'Khon Kaen Vet Center', lat: 16.4401, lng: 102.8360 }
+      ],
+      'สงขลา': [
+        { name: 'Songkhla Pet Care', lat: 7.1906, lng: 100.6045 }
+      ],
+      'หาดใหญ่': [
+        { name: 'Hatyai Animal Hospital', lat: 7.7956, lng: 100.2833 }
+      ]
     };
 
-    // Initialization
+    // Element SDK Init
+    const defaultConfig = { app_title: 'Vet Clinic Job Board' };
+    let config = { ...defaultConfig };
+
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (newConfig) => {
+        config = newConfig;
+        document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+      },
+      mapToCapabilities: (cfg) => ({
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      }),
+      mapToEditPanelValues: (cfg) => new Map([
+        ['app_title', cfg.app_title || defaultConfig.app_title]
+      ])
+    });
+
+    // Data SDK Init
+    const dataHandler = {
+      onDataChanged(data) {
+        allJobs = data;
+        renderJobsList();
+        updateMap();
+      }
+    };
+
     async function initApp() {
-      await window.dataSdk.init({
-        onDataChanged(data) {
-          allJobs = data;
-          renderJobsList();
-          updateMap();
-          document.getElementById('jobCount').textContent = `${data.length} ตำแหน่ง`;
-        }
-      });
-      
+      await window.dataSdk.init(dataHandler);
       initMap();
       setupEventListeners();
       lucide.createIcons();
     }
 
     function initMap() {
-      map = L.map('map', { scrollWheelZoom: false }).setView([13.7563, 100.5018], 6);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+      map = L.map('map').setView([13.7563, 100.5018], 6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
     }
 
     function updateMap() {
       Object.values(markers).forEach(m => map.removeLayer(m));
       markers = {};
 
-      allJobs.forEach(job => {
-        const typeClasses = {
-          hospital: 'marker-hospital', lab: 'marker-lab',
-          university: 'marker-university', company: 'marker-company'
-        };
-        const iconHtml = { hospital: '🏥', lab: '🧪', university: '🎓', company: '🏢' };
-
-        const markerIcon = L.divIcon({
-          className: 'custom-div-icon',
-          html: `<div class="custom-marker ${typeClasses[job.clinic_type] || 'marker-hospital'}"><i>${iconHtml[job.clinic_type] || '🏥'}</i></div>`,
-          iconSize: [44, 44],
-          iconAnchor: [22, 44]
+      allJobs.forEach((job, index) => {
+        const customIcon = L.divIcon({
+          html: `<div class="custom-marker">🏥</div>`,
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+          popupAnchor: [0, -20]
         });
 
-        const marker = L.marker([job.latitude, job.longitude], { icon: markerIcon })
-          .bindPopup(`<div class="p-2"><strong>${job.clinic_name}</strong><br><small>${job.position}</small></div>`)
+        const marker = L.marker([job.latitude, job.longitude], { icon: customIcon })
+          .bindPopup(`
+            <div class="text-sm">
+              <p class="font-bold text-purple-600">${job.clinic_name}</p>
+              <p class="text-gray-700"><strong>${job.position}</strong></p>
+              <p class="text-gray-600 text-xs">${job.province}</p>
+            </div>
+          `)
+          .on('click', () => {
+            document.querySelector(`[data-job-id="${job.__backendId}"]`)?.scrollIntoView({ behavior: 'smooth' });
+          })
           .addTo(map);
-        
+
         markers[job.__backendId] = marker;
       });
     }
 
-    function renderJobsList(filter = 'all') {
-      const list = document.getElementById('jobsList');
-      const filtered = filter === 'all' ? allJobs : allJobs.filter(j => j.clinic_type === filter);
-
-      if (filtered.length === 0) {
-        list.innerHTML = `<div class="bg-white p-12 text-center rounded-2xl text-gray-400 border border-gray-100">ไม่พบประกาศงานในหมวดนี้</div>`;
+    function renderJobsList() {
+      const jobsList = document.getElementById('jobsList');
+      
+      if (allJobs.length === 0) {
+        jobsList.innerHTML = '<p class="text-gray-500 text-center py-8">ยังไม่มีประกาศ</p>';
         return;
       }
 
-      list.innerHTML = filtered.map(job => `
-        <div class="job-card" onclick="editJob('${job.__backendId}')">
-          <div class="flex flex-col md:flex-row gap-6">
-            ${job.infograph_image ? `<img src="${job.infograph_image}" class="w-full md:w-32 h-32 object-cover rounded-xl" onerror="this.remove()">` : ''}
+      jobsList.innerHTML = allJobs.map(job => `
+        <div class="job-card" data-job-id="${job.__backendId}">
+          <div class="flex gap-4 mb-2">
+            ${job.clinic_logo ? `<img src="${job.clinic_logo}" style="width: 60px; height: 60px; object-fit: contain; flex-shrink: 0;" alt="Logo" onerror="this.style.display='none';">` : ''}
             <div class="flex-1">
-              <div class="flex justify-between items-start mb-2">
-                <div>
-                   <h3 class="text-xl font-bold text-gray-900">${job.position}</h3>
-                   <p class="text-purple-600 font-bold text-sm">${job.clinic_name}</p>
-                </div>
-                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold uppercase">
-                  ${job.clinic_type}
-                </span>
-              </div>
-              <p class="text-gray-500 text-sm line-clamp-2 mb-4">${job.announcement}</p>
-              <div class="flex flex-wrap gap-4 text-sm text-gray-500 font-medium">
-                <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4 text-red-400"></i> ${job.province}</span>
-                <span class="flex items-center gap-1.5"><i data-lucide="banknote" class="w-4 h-4 text-green-500"></i> ${job.salary || 'ตามตกลง'}</span>
-                <span class="flex items-center gap-1.5 ml-auto"><i data-lucide="phone" class="w-4 h-4"></i> ${job.phone || '-'}</span>
-              </div>
+              <h3 class="font-bold text-lg text-purple-600">${job.clinic_name}</h3>
+              <p class="text-sm text-gray-600">${job.position} • ${job.province}</p>
+              <span class="clinic-badge">📋 โพสต์โดย ${job.created_by_clinic ? job.created_by_clinic : 'Admin'}</span>
             </div>
           </div>
-        </div>
-      `).join('');
-      lucide.createIcons();
-    }
-
-    // Modal & Selection Logic
-    function showProvinceList() {
-      const container = document.getElementById('selectionContainer');
-      document.getElementById('selectionTitle').innerText = "เลือกจังหวัด";
-      
-      let html = Object.keys(clinicsData).sort().map(province => `
-        <div class="clinic-option" onclick="showClinicsInProvince('${province}')">
-          <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
-             <i data-lucide="map"></i>
+          ${job.infograph_image ? `<img src="${job.infograph_image}" class="job-image" alt="Infograph" onerror="this.style.display='none';">` : ''}
+          <p class="text-gray-700 text-sm mb-2">${job.announcement}</p>
+          <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+            ${job.salary ? `<p><strong>เงินเดือน:</strong> ${job.salary}</p>` : ''}
+            ${job.experience ? `<p><strong>ประสบการณ์:</strong> ${job.experience}</p>` : ''}
+            ${job.phone ? `<p><strong>โทร:</strong> ${job.phone}</p>` : ''}
           </div>
-          <div class="flex-1">
-            <p class="font-bold text-gray-800">${province}</p>
-            <p class="text-xs text-gray-500">${clinicsData[province].length} สถานประกอบการ</p>
-          </div>
-          <i data-lucide="chevron-right" class="text-gray-300"></i>
         </div>
       `).join('');
 
-      container.innerHTML = html;
-      document.getElementById('clinicSelectModal').classList.add('active');
       lucide.createIcons();
     }
 
-    window.showClinicsInProvince = function(province) {
-      const container = document.getElementById('selectionContainer');
-      document.getElementById('selectionTitle').innerText = `คลินิกใน ${province}`;
-      
-      let html = `<button onclick="showProvinceList()" class="mb-4 text-sm font-bold text-purple-600 flex items-center gap-1">← ย้อนกลับ</button>`;
-      html += clinicsData[province].map(c => `
-        <div class="clinic-option" onclick="selectClinic('${c.name}', ${c.lat}, ${c.lng}, '${province}')">
-          <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-             <i data-lucide="home"></i>
-          </div>
-          <p class="font-bold text-gray-800 flex-1">${c.name}</p>
-        </div>
-      `).join('');
+    function setupEventListeners() {
+      document.getElementById('addJobBtn').addEventListener('click', () => {
+        showClinicSelectModal();
+      });
 
-      container.innerHTML = html;
-      lucide.createIcons();
-    }
+      document.getElementById('closeModalBtn').addEventListener('click', () => {
+        document.getElementById('formModal').classList.remove('active');
+      });
 
-    function selectClinic(name, lat, lng, province) {
-      selectedClinic = { name, lat, lng, province };
-      closeModals();
-      resetForm();
-      document.getElementById('clinicDisplay').classList.remove('hidden');
-      document.getElementById('selectedClinicName').innerText = name;
-      document.getElementById('formModal').classList.add('active');
-    }
+      document.getElementById('imageInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const preview = document.getElementById('imagePreview');
+            preview.src = event.target.result;
+            preview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
 
-    // Form Handling
-    async function readFile(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.readAsDataURL(file);
+      document.getElementById('logoInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const preview = document.getElementById('logoPreview');
+            preview.src = event.target.result;
+            preview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      document.getElementById('jobForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const imageInput = document.getElementById('imageInput');
+        let imageData = currentEditingJob?.infograph_image || '';
+        
+        if (imageInput.files.length > 0) {
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            imageData = event.target.result;
+            await submitJobForm(imageData);
+          };
+          reader.readAsDataURL(imageInput.files[0]);
+        } else {
+          await submitJobForm(imageData);
+        }
+      });
+
+      document.getElementById('registerNewClinic').addEventListener('click', () => {
+        showNewClinicForm();
       });
     }
 
-    document.getElementById('jobForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.innerText = "กำลังประมวลผล...";
+    function showClinicSelectModal() {
+      const container = document.getElementById('clinicOptionsContainer');
+      let html = '';
+      
+      Object.keys(clinicsData).forEach(province => {
+        clinicsData[province].forEach(clinic => {
+          html += `
+            <div class="clinic-option" onclick="selectClinic('${clinic.name}', ${clinic.lat}, ${clinic.lng}, '${province}')">
+              <p class="font-semibold text-gray-800">${clinic.name}</p>
+              <p class="text-xs text-gray-500">${province}</p>
+            </div>
+          `;
+        });
+      });
+      
+      container.innerHTML = html;
+      document.getElementById('clinicSelectModal').classList.add('active');
+    }
 
-      const fileInput = document.getElementById('imageInput');
-      let imageData = currentEditingJob?.infograph_image || '';
-      if (fileInput.files[0]) imageData = await readFile(fileInput.files[0]);
+    function selectClinic(clinicName, lat, lng, province) {
+      selectedClinic = { name: clinicName, lat, lng, province };
+      document.getElementById('clinicSelectModal').classList.remove('active');
+      
+      currentEditingJob = null;
+      document.getElementById('formTitle').textContent = 'เพิ่มประกาศใหม่';
+      document.getElementById('deleteBtn').classList.add('hidden');
+      document.getElementById('jobForm').reset();
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('clinicDisplay').style.display = 'block';
+      document.getElementById('selectedClinicName').textContent = clinicName;
+      
+      document.getElementById('formModal').classList.add('active');
+    }
 
-      const payload = {
+    function showNewClinicForm() {
+      const newClinicName = prompt('ชื่อคลินิกของคุณ:');
+      if (!newClinicName) return;
+
+      const newClinicProvince = prompt('จังหวัดของคุณ:');
+      if (!newClinicProvince) return;
+
+      const newClinicLat = parseFloat(prompt('ละติจูด (เช่น 13.7563):'));
+      if (isNaN(newClinicLat)) return;
+
+      const newClinicLng = parseFloat(prompt('ลองจิจูด (เช่น 100.5018):'));
+      if (isNaN(newClinicLng)) return;
+
+      if (!clinicsData[newClinicProvince]) {
+        clinicsData[newClinicProvince] = [];
+      }
+      
+      clinicsData[newClinicProvince].push({
+        name: newClinicName,
+        lat: newClinicLat,
+        lng: newClinicLng
+      });
+
+      selectClinic(newClinicName, newClinicLat, newClinicLng, newClinicProvince);
+    }
+
+    async function submitJobForm(imageData) {
+      if (!selectedClinic) {
+        alert('กรุณาเลือกคลินิก');
+        return;
+      }
+
+      const logoInput = document.getElementById('logoInput');
+      let logoData = currentEditingJob?.clinic_logo || '';
+      
+      if (logoInput.files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          logoData = event.target.result;
+          await submitJobForm(imageData);
+        };
+        reader.readAsDataURL(logoInput.files[0]);
+        return;
+      }
+
+      const formData = {
         clinic_name: selectedClinic.name,
-        clinic_type: document.getElementById('clinicType').value,
         position: document.getElementById('position').value,
         announcement: document.getElementById('announcement').value,
         salary: document.getElementById('salary').value,
+        experience: document.getElementById('experience').value,
         phone: document.getElementById('phone').value,
         province: selectedClinic.province,
         latitude: selectedClinic.lat,
         longitude: selectedClinic.lng,
         infograph_image: imageData,
-        updated_at: new Date().toISOString()
+        clinic_logo: logoData,
+        clinic_id: selectedClinic.name + selectedClinic.lat + selectedClinic.lng,
+        created_by_clinic: selectedClinic.name
       };
 
       if (currentEditingJob) {
-        await window.dataSdk.update({ ...currentEditingJob, ...payload });
+        const updatedJob = { ...currentEditingJob, ...formData };
+        const result = await window.dataSdk.update(updatedJob);
+        if (result.isError) {
+          alert('เกิดข้อผิดพลาดในการอัปเดต');
+          return;
+        }
       } else {
-        await window.dataSdk.create(payload);
+        const result = await window.dataSdk.create(formData);
+        if (result.isError) {
+          alert('เกิดข้อผิดพลาดในการบันทึก');
+          return;
+        }
       }
 
-      closeModals();
-      btn.disabled = false;
-      btn.innerText = "บันทึกและประกาศ";
-    };
+      document.getElementById('formModal').classList.remove('active');
+      selectedClinic = null;
+    }
 
-    window.editJob = (id) => {
-      const job = allJobs.find(j => j.__backendId === id);
+    window.editJob = function(jobId) {
+      const job = allJobs.find(j => j.__backendId === jobId);
       if (!job) return;
+
       currentEditingJob = job;
       selectedClinic = { name: job.clinic_name, lat: job.latitude, lng: job.longitude, province: job.province };
+      
+      document.getElementById('formTitle').textContent = 'แก้ไขประกาศ';
+      document.getElementById('deleteBtn').classList.remove('hidden');
+      document.getElementById('clinicDisplay').style.display = 'block';
+      document.getElementById('selectedClinicName').textContent = job.clinic_name;
       
       document.getElementById('position').value = job.position;
       document.getElementById('announcement').value = job.announcement;
       document.getElementById('salary').value = job.salary;
+      document.getElementById('experience').value = job.experience;
       document.getElementById('phone').value = job.phone;
-      document.getElementById('clinicType').value = job.clinic_type;
       
       if (job.infograph_image) {
         document.getElementById('imagePreview').src = job.infograph_image;
-        document.getElementById('imagePreview').classList.remove('hidden');
+        document.getElementById('imagePreview').style.display = 'block';
       }
 
-      document.getElementById('deleteBtn').classList.remove('hidden');
-      document.getElementById('deleteBtn').onclick = async () => {
-        if (confirm('ยืนยันการลบประกาศนี้?')) {
-          await window.dataSdk.delete(job);
-          closeModals();
-        }
-      };
-      
+      if (job.clinic_logo) {
+        document.getElementById('logoPreview').src = job.clinic_logo;
+        document.getElementById('logoPreview').style.display = 'block';
+      }
+
+      document.getElementById('deleteBtn').onclick = () => deleteJob(jobId);
       document.getElementById('formModal').classList.add('active');
-    };
-
-    function resetForm() {
-      currentEditingJob = null;
-      document.getElementById('jobForm').reset();
-      document.getElementById('imagePreview').classList.add('hidden');
-      document.getElementById('deleteBtn').classList.add('hidden');
     }
 
-    function closeModals() {
-      document.querySelectorAll('.form-modal').forEach(m => m.classList.remove('active'));
-    }
+    async function deleteJob(jobId) {
+      const job = allJobs.find(j => j.__backendId === jobId);
+      if (!job) return;
 
-    function setupEventListeners() {
-      document.getElementById('addJobBtn').onclick = showProvinceList;
-      document.getElementById('imageInput').onchange = async (e) => {
-        if (e.target.files[0]) {
-          document.getElementById('imagePreview').src = await readFile(e.target.files[0]);
-          document.getElementById('imagePreview').classList.remove('hidden');
+      if (confirm(`ต้องการลบประกาศจาก ${job.clinic_name} ใช่หรือไม่?`)) {
+        const result = await window.dataSdk.delete(job);
+        if (result.isError) {
+          alert('เกิดข้อผิดพลาดในการลบ');
+          return;
         }
-      };
+        document.getElementById('formModal').classList.remove('active');
+      }
     }
 
+    // Initialize app
     initApp();
   </script>
- </body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9edda6a0a047d016',t:'MTc3NjQ1MjE5OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
